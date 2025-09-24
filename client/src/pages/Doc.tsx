@@ -5,6 +5,7 @@ import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { IndexeddbPersistence } from "y-indexeddb";
 import { Awareness } from "y-protocols/awareness";
+import { upsertNoteMeta } from "../lib/notes";
 
 export default function Doc() {
   const { id } = useParams();
@@ -50,7 +51,19 @@ export default function Doc() {
     const ytext = ydoc.getText("note");
 
     // whenever shared text changes, update textarea value
-    const applyToState = () => setText(ytext.toString());
+
+    const applyToState = () => {
+      const value = ytext.toString();
+      setText(value);
+
+      // derive a friendly title from first line (or Untitled)
+      const firstLine = value.split("\n")[0]?.trim() || "Untitled";
+      upsertNoteMeta({
+        id: room,
+        title: firstLine.slice(0, 60),
+        updatedAt: Date.now(),
+      });
+    };
     ytext.observe(applyToState);
     applyToState(); // initial paint
 
