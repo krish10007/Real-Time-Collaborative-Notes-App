@@ -48,6 +48,26 @@ export default function Doc() {
       ydoc
     );
 
+    // debug logs to help diagnose connection issues
+    try {
+      provider.on("status", (e: any) => {
+        // prints connected / disconnected status to Vite terminal
+        // eslint-disable-next-line no-console
+        console.log("y-websocket status:", e.status);
+      });
+      provider.on("connection-close", (ev: any) => {
+        // eslint-disable-next-line no-console
+        console.log("y-websocket connection closed:", ev);
+      });
+      provider.on("connection-error", (ev: any) => {
+        // eslint-disable-next-line no-console
+        console.error("y-websocket connection error:", ev);
+      });
+    } catch (err) {
+      // eslint-disable-next-line no-console
+      console.error("error attaching provider listeners", err);
+    }
+
     const ytext = ydoc.getText("note");
 
     // whenever shared text changes, update textarea value
@@ -107,7 +127,7 @@ export default function Doc() {
   };
 
   return (
-    <div className="p-6">
+    <div className="container-page">
       {!online && (
         <div className="mb-3 inline-block rounded bg-yellow-100 px-3 py-2 text-yellow-900">
           Offline — changes will sync when you reconnect
@@ -131,7 +151,7 @@ export default function Doc() {
       <textarea
         value={text}
         onChange={handleChange}
-        className="w-full h-[70vh] border rounded p-2"
+        className="w-full min-h-[60vh] border rounded-lg p-4 resize-none shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-400"
         placeholder="Start typing..."
         spellCheck={false}
       />
