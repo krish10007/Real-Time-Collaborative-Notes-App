@@ -4,6 +4,7 @@ import { useParams } from "react-router-dom";
 import * as Y from "yjs";
 import { WebsocketProvider } from "y-websocket";
 import { IndexeddbPersistence } from "y-indexeddb";
+import { Awareness } from "y-protocols/awareness";
 
 export default function Doc() {
   const { id } = useParams();
@@ -12,6 +13,7 @@ export default function Doc() {
   // UI state
   const [text, setText] = useState("");
   const [online, setOnline] = useState<boolean>(navigator.onLine);
+  const [users, setUsers] = useState<{ name: string; color: string }[]>([]);
 
   // Yjs refs (so we can use them in handlers)
   const ydocRef = useRef<Y.Doc | null>(null);
@@ -29,7 +31,7 @@ export default function Doc() {
     };
   }, []);
 
-  // Yjs setup: IndexedDB + WebSocket + textarea binding
+  // Yjs setup: IndexedDB + WebSocket + textarea binding + awareness (presence info)
   useEffect(() => {
     const ydoc = new Y.Doc();
 
@@ -56,11 +58,29 @@ export default function Doc() {
     ydocRef.current = ydoc;
     ytextRef.current = ytext;
 
+    // --- NEW: awareness (presence info)
+    const awareness: Awareness = provider.awareness;
+
+    // set my local state (user presence)
+    awareness.setLocalStateField("user", {
+      name: "User-" + Math.floor(Math.random() * 1000),
+      color: "#" + Math.floor(Math.random() * 16777215).toString(16),
+    });
+
+    // listen for awareness updates (who’s online)
+    const onAwarenessChange = () => {
+      const states = Array.from(awareness.getStates().values());
+      setUsers(states.map((s: any) => s.user));
+    };
+    awareness.on("change", onAwarenessChange);
+    onAwarenessChange();
+
     // cleanup
     return () => {
       ytext.unobserve(applyToState);
       provider.destroy();
       ydoc.destroy();
+      awareness.off("change", onAwarenessChange);
     };
   }, [room]);
 
@@ -82,6 +102,18 @@ export default function Doc() {
       )}
 
       <h1 className="mb-4 text-xl font-bold">Doc: {room}</h1>
+
+      <div className="mb-4 flex flex-wrap gap-2">
+        {users.map((u, i) => (
+          <span
+            key={i}
+            className="px-2 py-1 rounded text-white"
+            style={{ backgroundColor: u.color }}
+          >
+            {u.name}
+          </span>
+        ))}
+      </div>
 
       <textarea
         value={text}
