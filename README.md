@@ -19,9 +19,11 @@ Google Docs–lite built with React, TypeScript, Yjs, WebSockets, and TailwindCS
 🖼️ Screenshots
 Home Page
 
+![alt text](<Screenshot 2025-09-25 234527.png>)
+
 Editor
 
-(Add screenshots from your app here — you already have them 👍)
+![alt text](<Screenshot 2025-09-25 234518.png>)
 
 🛠️ Tech Stack
 
